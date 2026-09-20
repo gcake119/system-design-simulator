@@ -4,6 +4,10 @@
 
 > 本分支採用台灣常用的繁體中文用語；QPS、CDN、SQL、API、gRPC 等業界通用技術縮寫則保留原文。原始英文說明請參閱 [README.en.md](README.en.md)。
 
+## 線上使用
+
+[立即開啟 SystemForge 繁體中文版](https://system-design-simulator-chi.vercel.app/)
+
 ## 功能
 
 - 35 種基礎設施元件，涵蓋網路、運算、儲存、訊息傳遞與平台基礎設施。
