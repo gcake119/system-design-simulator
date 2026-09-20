@@ -1,7 +1,8 @@
 "use client";
 
 import { AppShell } from "@/components/layout/app-shell";
+import { LocalizationProvider } from "@/components/localization/LocalizationProvider";
 
 export default function Home() {
-  return <AppShell />;
+  return <LocalizationProvider><AppShell /></LocalizationProvider>;
 }

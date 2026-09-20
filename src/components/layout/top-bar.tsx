@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Play,
@@ -26,7 +26,9 @@ import {
   Loader2,
   Sun,
   Moon,
+  Languages,
 } from "lucide-react";
+import { getLocale, setLocale } from "@/components/localization/LocalizationProvider";
 import { useAppStore } from "@/store/appStore";
 import { useCanvasStore } from "@/store/canvasStore";
 import { useSimulationStore } from "@/store/simulationStore";
@@ -51,7 +53,10 @@ interface TopBarProps {
   onToggleRight: () => void;
 }
 
+const subscribeLocale = () => () => {};
+
 export function TopBar({ onSimulate, onScore, onClearCanvas, onSave, onLoad, onStartInterview, onCreateProblem, onOpenSupport, onToggleLeft, onToggleRight }: TopBarProps) {
+  const locale = useSyncExternalStore(subscribeLocale, getLocale, () => "zh-TW");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
@@ -75,6 +80,7 @@ export function TopBar({ onSimulate, onScore, onClearCanvas, onSave, onLoad, onS
   const toggleTheme = useAppStore((s) => s.toggleTheme);
 
   const customProblems = useCustomProblemsStore((s) => s.problems);
+
   const currentProblem =
     PROBLEMS.find((p) => p.id === selectedProblemId) ??
     customProblems.find((p) => p.id === selectedProblemId);
@@ -526,6 +532,16 @@ export function TopBar({ onSimulate, onScore, onClearCanvas, onSave, onLoad, onS
           <Trophy className="h-3 w-3" />
           <span className="hidden sm:inline">Score</span>
         </Button>
+
+        <button
+          onClick={() => setLocale(locale === "zh-TW" ? "en" : "zh-TW")}
+          className="flex h-7 items-center gap-1 rounded-md px-2 text-[11px] font-medium text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+          title={locale === "zh-TW" ? "View original English" : "檢視繁體中文"}
+          aria-label={locale === "zh-TW" ? "View original English" : "檢視繁體中文"}
+        >
+          <Languages className="h-3.5 w-3.5" />
+          <span>{locale === "zh-TW" ? "EN" : "繁中"}</span>
+        </button>
 
         {/* Buy me a coffee — desktop only (mobile has FAB + overflow menu) */}
         <button
