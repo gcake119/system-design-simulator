@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import zhTW from "@/lib/zh-tw.generated.json";
+import { reduceToOutermostNodes } from "./localizationBatch";
 
 export type Locale = "zh-TW" | "en";
 export const LOCALE_KEY = "systemforge-locale";
@@ -83,24 +84,50 @@ export function LocalizationProvider({ children }: { children: React.ReactNode }
     if (locale === "en") return;
 
     localize(document.body);
+    const pendingNodes = new Set<Node>();
+    let localizationFrame: number | null = null;
+
+    const observe = (observer: MutationObserver) => {
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    };
+
     const observer = new MutationObserver((records) => {
       for (const record of records) {
         for (const added of record.addedNodes) {
-          if (added.nodeType === Node.TEXT_NODE && added.nodeValue) {
-            const next = translate(added.nodeValue);
-            if (next !== added.nodeValue) added.nodeValue = next;
-          } else if (added instanceof Element) {
-            localize(added);
-          }
+          pendingNodes.add(added);
         }
-        if (record.type === "characterData" && record.target.nodeValue) {
-          const next = translate(record.target.nodeValue);
-          if (next !== record.target.nodeValue) record.target.nodeValue = next;
+        if (record.type === "characterData") {
+          pendingNodes.add(record.target);
         }
       }
+
+      if (localizationFrame !== null) return;
+      localizationFrame = requestAnimationFrame(() => {
+        localizationFrame = null;
+        const roots = reduceToOutermostNodes(Array.from(pendingNodes));
+        pendingNodes.clear();
+
+        observer.disconnect();
+        for (const root of roots) {
+          if (root.nodeType === Node.TEXT_NODE && root.nodeValue) {
+            const next = translate(root.nodeValue);
+            if (next !== root.nodeValue) root.nodeValue = next;
+          } else if (root instanceof Element) {
+            localize(root);
+          }
+        }
+        observe(observer);
+      });
     });
-    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
-    return () => observer.disconnect();
+    observe(observer);
+    return () => {
+      observer.disconnect();
+      if (localizationFrame !== null) cancelAnimationFrame(localizationFrame);
+    };
   }, []);
 
   return children;
